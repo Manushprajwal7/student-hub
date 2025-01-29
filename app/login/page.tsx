@@ -1,7 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -27,7 +27,7 @@ function LoginContent() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AuthForm />
+        <AuthForm type="login" />
       </CardContent>
       <CardFooter>
         <p>
