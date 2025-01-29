@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Define public routes that don't require authentication
-const publicRoutes = [
+const publicRoutes = new Set([
   "/",
   "/login",
   "/register",
@@ -16,57 +16,42 @@ const publicRoutes = [
   "/study-groups",
   "/scholarships",
   "/search",
-];
+]);
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  // Refresh session if expired
+  // Refresh session if expired - required for Server Components
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   // Get the pathname of the request
-  const pathname = req.nextUrl.pathname;
+  const path = req.nextUrl.pathname;
 
   // Check if the route is public
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith("/auth/")
-  );
+  const isPublicRoute = publicRoutes.has(path) || path.startsWith("/auth/");
 
-  // Check if this is a protected route
-  const isProtectedRoute =
-    pathname.includes("/new") ||
-    pathname.includes("/edit") ||
-    pathname === "/profile" ||
-    pathname === "/settings";
-
-  // Allow access to public routes regardless of authentication
-  if (isPublicRoute && !isProtectedRoute) {
+  // Allow access to public routes or if we're in development
+  if (isPublicRoute || process.env.NODE_ENV === "development") {
     return res;
   }
 
-  // If the route is protected and user is not authenticated, redirect to login
-  if (isProtectedRoute && !session) {
+  // Check if we're trying to access a protected route without a session
+  if (!session) {
+    // Save the original pathname to redirect back after login
     const redirectUrl = new URL("/login", req.url);
-    redirectUrl.searchParams.set("redirectedFrom", pathname);
+    redirectUrl.searchParams.set("redirectedFrom", path);
     return NextResponse.redirect(redirectUrl);
   }
 
   return res;
 }
 
-// Update matcher to exclude static files and api routes
+// Update matcher configuration
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
