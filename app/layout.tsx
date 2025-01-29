@@ -1,19 +1,20 @@
-"use client";
-
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import MainNav from "@/components/main-nav";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
-import { useState } from "react";
+import type React from "react"; // Added import for React
+
+export const metadata = {
+  title: "Student Hub",
+  description: "A community-driven platform for students",
+};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isLoading, setIsLoading] = useState(true);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
