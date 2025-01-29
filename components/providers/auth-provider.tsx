@@ -3,10 +3,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
-import type { AdminConfig } from "@/types/admin";
+import { createClient } from "@supabase/supabase-js";
 
-// Get admin emails from environment variable
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+);
+
 const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS
   ? JSON.parse(process.env.NEXT_PUBLIC_ADMIN_EMAILS)
   : [];
@@ -49,10 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }));
     });
 
-    // Listen for auth changes
+    // Listen for authentication state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       const isAdmin = session?.user?.email
         ? ADMIN_EMAILS.includes(session.user.email)
         : false;
@@ -72,58 +75,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     ...state,
+
     signUp: async (email: string, password: string, fullName: string) => {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          {
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            },
+          }
+        );
 
-      if (authError) throw authError;
+        if (authError) throw authError;
 
-      if (authData.user) {
-        // Create or update profile
-        const { error: profileError } = await supabase.from("profiles").upsert({
-          user_id: authData.user.id,
-          full_name: fullName,
-          avatar_url: null,
-          updated_at: new Date().toISOString(),
-        });
+        if (authData.user) {
+          // Create or update profile
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              user_id: authData.user.id,
+              full_name: fullName,
+              avatar_url: null,
+              updated_at: new Date().toISOString(),
+            });
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
+        }
+
+        router.push("/login?message=Check your email to confirm your account");
+      } catch (error) {
+        console.error("Sign-up Error:", error);
+        throw error;
       }
-
-      router.push("/login?message=Check your email to confirm your account");
     },
+
     signIn: async (email: string, password: string) => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      try {
+        // Attempt to sign in
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw new Error(error.message);
 
-      // Get the redirect URL from query parameters or use default
-      const searchParams = new URLSearchParams(window.location.search);
-      const redirectTo = searchParams.get("redirectedFrom") || "/";
+        // Get redirect URL from query parameters or default to "/"
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectTo = searchParams.get("redirectedFrom") || "/";
 
-      // Ensure we have a fresh session before redirecting
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        router.push(redirectTo);
+        // Ensure we have a fresh session before redirecting
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+        if (sessionError) throw new Error(sessionError.message);
+
+        if (session) {
+          router.push(redirectTo);
+        }
+      } catch (err) {
+        console.error("Sign-in Error:", err);
+        throw err;
       }
     },
+
     signOut: async () => {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      router.push("/login");
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        router.push("/login");
+      } catch (error) {
+        console.error("Sign-out Error:", error);
+        throw error;
+      }
     },
   };
 
-  // Show loading state only on protected routes
+  // Show a loading screen on protected routes while checking authentication state
   if (
     state.isLoading &&
     !pathname?.startsWith("/login") &&
