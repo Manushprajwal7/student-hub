@@ -1,29 +1,37 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { BookOpen, Calendar, GraduationCap, LifeBuoy, Megaphone, School, Users2 } from 'lucide-react'
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  Calendar,
+  GraduationCap,
+  LifeBuoy,
+  Megaphone,
+  School,
+  Users2,
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { supabase } from '@/lib/supabase'
-import { PageTransition } from '@/components/page-transition'
+} from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { PageTransition } from "@/components/page-transition";
 
 interface Stats {
-  issues: number
-  events: number
-  announcements: number
-  resources: number
-  jobs: number
-  studyGroups: number
-  scholarships: number
+  issues: number;
+  events: number;
+  announcements: number;
+  resources: number;
+  jobs: number;
+  studyGroups: number;
+  scholarships: number;
 }
 
 export default function Home() {
@@ -35,7 +43,7 @@ export default function Home() {
     jobs: 0,
     studyGroups: 0,
     scholarships: 0,
-  })
+  });
 
   useEffect(() => {
     const loadStats = async () => {
@@ -49,28 +57,22 @@ export default function Home() {
           { count: studyGroupsCount },
           { count: scholarshipsCount },
         ] = await Promise.all([
+          supabase.from("issues").select("*", { count: "exact", head: true }),
+          supabase.from("events").select("*", { count: "exact", head: true }),
           supabase
-            .from('issues')
-            .select('*', { count: 'exact', head: true }),
+            .from("announcements")
+            .select("*", { count: "exact", head: true }),
           supabase
-            .from('events')
-            .select('*', { count: 'exact', head: true }),
+            .from("resources")
+            .select("*", { count: "exact", head: true }),
+          supabase.from("jobs").select("*", { count: "exact", head: true }),
           supabase
-            .from('announcements')
-            .select('*', { count: 'exact', head: true }),
+            .from("study_groups")
+            .select("*", { count: "exact", head: true }),
           supabase
-            .from('resources')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('jobs')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('study_groups')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('scholarships')
-            .select('*', { count: 'exact', head: true }),
-        ])
+            .from("scholarships")
+            .select("*", { count: "exact", head: true }),
+        ]);
 
         setStats({
           issues: issuesCount || 0,
@@ -80,78 +82,78 @@ export default function Home() {
           jobs: jobsCount || 0,
           studyGroups: studyGroupsCount || 0,
           scholarships: scholarshipsCount || 0,
-        })
+        });
       } catch (error) {
-        console.error('Error loading stats:', error)
+        console.error("Error loading stats:", error);
       }
-    }
+    };
 
-    loadStats()
-  }, [])
+    loadStats();
+  }, []);
 
   const statItems = [
     {
-      id: 'issues',
-      title: 'Active Issues',
-      description: 'Currently open issues',
+      id: "issues",
+      title: "Active Issues",
+      description: "Currently open issues",
       value: stats.issues.toString(),
       icon: LifeBuoy,
-      href: '/issues',
+      href: "/issues",
     },
     {
-      id: 'events',
-      title: 'Upcoming Events',
-      description: 'Events this week',
+      id: "events",
+      title: "Upcoming Events",
+      description: "Events this week",
       value: stats.events.toString(),
       icon: Calendar,
-      href: '/events',
+      href: "/events",
     },
     {
-      id: 'announcements',
-      title: 'Announcements',
-      description: 'Recent announcements',
+      id: "announcements",
+      title: "Announcements",
+      description: "Recent announcements",
       value: stats.announcements.toString(),
       icon: Megaphone,
-      href: '/announcements',
+      href: "/announcements",
     },
     {
-      id: 'resources',
-      title: 'Learning Resources',
-      description: 'Available study materials',
+      id: "resources",
+      title: "Learning Resources",
+      description: "Available study materials",
       value: stats.resources.toString(),
       icon: BookOpen,
-      href: '/resources',
+      href: "/resources",
     },
     {
-      id: 'jobs',
-      title: 'Job Opportunities',
-      description: 'Available positions',
+      id: "jobs",
+      title: "Job Opportunities",
+      description: "Available positions",
       value: stats.jobs.toString(),
       icon: GraduationCap,
-      href: '/jobs',
+      href: "/jobs",
     },
     {
-      id: 'study-groups',
-      title: 'Study Groups',
-      description: 'Active study sessions',
+      id: "study-groups",
+      title: "Study Groups",
+      description: "Active study sessions",
       value: stats.studyGroups.toString(),
       icon: Users2,
-      href: '/study-groups',
+      href: "/study-groups",
     },
     {
-      id: 'scholarships',
-      title: 'Scholarships',
-      description: 'Available scholarships',
+      id: "scholarships",
+      title: "Scholarships",
+      description: "Available scholarships",
       value: stats.scholarships.toString(),
       icon: School,
-      href: '/scholarships',
+      href: "/scholarships",
     },
-  ]
+  ];
 
   return (
     <PageTransition>
       <div className="flex flex-col gap-8">
-        <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
+        <section className="space-y-6 pb-4 pt-4 md:pb-8 md:pt-6 lg:py-24">
           <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
             <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
               Welcome to Student Hub
@@ -171,10 +173,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="container space-y-6 py-8 md:py-12 lg:py-24">
+        <section className="container space-y-0 py-0 md:py-1 lg:py-0">
           <div className="mx-auto grid gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3 lg:grid-cols-4">
             {statItems.map((stat) => (
-              <Card key={stat.id} className="transition-colors hover:bg-muted/50">
+              <Card
+                key={stat.id}
+                className="transition-colors hover:bg-muted/50"
+              >
                 <Link href={stat.href}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -193,6 +198,5 @@ export default function Home() {
         </section>
       </div>
     </PageTransition>
-  )
+  );
 }
-

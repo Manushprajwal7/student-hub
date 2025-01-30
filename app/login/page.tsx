@@ -29,14 +29,6 @@ function LoginContent() {
       <CardContent>
         <AuthForm type="login" />
       </CardContent>
-      <CardFooter>
-        <p>
-          Don't have an account?{" "}
-          <Link href="/signup">
-            <Button variant="link">Sign up</Button>
-          </Link>
-        </p>
-      </CardFooter>
     </Card>
   );
 }

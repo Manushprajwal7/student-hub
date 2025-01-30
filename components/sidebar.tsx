@@ -1,64 +1,73 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { BookOpen, Calendar, GraduationCap, Home, LifeBuoy, Megaphone, Users2, School } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  BookOpen,
+  Calendar,
+  GraduationCap,
+  Home,
+  LifeBuoy,
+  Megaphone,
+  Users2,
+  School,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const sidebarItems = [
   {
-    id: 'home',
-    title: 'Home',
-    href: '/',
+    id: "home",
+    title: "Home",
+    href: "/",
     icon: Home,
   },
   {
-    id: 'issues',
-    title: 'Issues',
-    href: '/issues',
+    id: "issues",
+    title: "Issues",
+    href: "/issues",
     icon: LifeBuoy,
   },
   {
-    id: 'events',
-    title: 'Events',
-    href: '/events',
+    id: "events",
+    title: "Events",
+    href: "/events",
     icon: Calendar,
   },
   {
-    id: 'announcements',
-    title: 'Announcements',
-    href: '/announcements',
+    id: "announcements",
+    title: "Announcements",
+    href: "/announcements",
     icon: Megaphone,
   },
   {
-    id: 'resources',
-    title: 'Resources',
-    href: '/resources',
+    id: "resources",
+    title: "Resources",
+    href: "/resources",
     icon: BookOpen,
   },
   {
-    id: 'jobs',
-    title: 'Jobs',
-    href: '/jobs',
+    id: "jobs",
+    title: "Jobs",
+    href: "/jobs",
     icon: GraduationCap,
   },
   {
-    id: 'study-groups',
-    title: 'Study Groups',
-    href: '/study-groups',
+    id: "study-groups",
+    title: "Study Groups",
+    href: "/study-groups",
     icon: Users2,
   },
   {
-    id: 'scholarships',
-    title: 'Scholarships',
-    href: '/scholarships',
+    id: "scholarships",
+    title: "Scholarships",
+    href: "/scholarships",
     icon: School,
   },
-]
+];
 
 export function Sidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <div className="fixed left-0 top-0 hidden h-screen w-56 border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:block">
@@ -74,15 +83,17 @@ export function Sidebar() {
               key={item.id}
               href={item.href}
               className={cn(
-                'flex items-center gap-x-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
-                pathname === item.href ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
+                "flex items-center gap-x-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                pathname === item.href
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground"
               )}
             >
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 260,
                   damping: 20,
                   delay: 0.1 * sidebarItems.indexOf(item),
@@ -96,7 +107,7 @@ export function Sidebar() {
                   className="absolute left-0 h-8 w-1 rounded-r-full bg-primary"
                   layoutId="sidebar-indicator"
                   transition={{
-                    type: 'spring',
+                    type: "spring",
                     stiffness: 300,
                     damping: 30,
                   }}
@@ -104,12 +115,8 @@ export function Sidebar() {
               )}
             </Link>
           ))}
-           <div className="py-2  pt-20 text-center text-xs text-muted-foreground">
-          Made with ❤️  ManushPrajwal
-        </div>
         </nav>
       </div>
     </div>
-  )
+  );
 }
-
