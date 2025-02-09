@@ -2,88 +2,44 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = [
-  "/resources/new",
-  "/issues/new",
-  "/events/new",
-  "/announcements/new",
-  "/jobs/new",
-  "/study-groups/new",
-  "/scholarships/new",
-  "/profile",
-  "/settings",
-];
-
 export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+
   try {
-    // Create a response object that we can modify
-    const res = NextResponse.next();
-
-    // Create a Supabase client configured to use cookies
-    const supabase = createMiddlewareClient({ req, res });
-
-    // Refresh session if exists
     const {
       data: { session },
       error,
     } = await supabase.auth.getSession();
 
-    const pathname = req.nextUrl.pathname;
+    if (error) throw error;
 
-    // Check if the current path is protected
-    const isProtectedRoute = protectedRoutes.some((route) =>
-      pathname.startsWith(route)
-    );
+    const isAuthPage = req.nextUrl.pathname === "/login";
 
-    if (isProtectedRoute) {
-      if (!session) {
-        // Redirect to login if there's no session
-        const redirectUrl = new URL("/login", req.url);
-        redirectUrl.searchParams.set("redirectedFrom", pathname);
-        return NextResponse.redirect(redirectUrl);
-      }
+    // Redirect to home if accessing login page while authenticated
+    if (isAuthPage && session) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
 
-      // Verify token expiration
-      const tokenExpiration = session.expires_at;
-      const now = Math.floor(Date.now() / 1000);
+    // Allow access to login page and auth callback
+    if (isAuthPage || req.nextUrl.pathname.startsWith("/auth/")) {
+      return res;
+    }
 
-      if (tokenExpiration && tokenExpiration < now) {
-        // Token is expired, try to refresh
-        const {
-          data: { session: newSession },
-          error: refreshError,
-        } = await supabase.auth.refreshSession();
-
-        if (refreshError || !newSession) {
-          // If refresh fails, redirect to login
-          const redirectUrl = new URL("/login", req.url);
-          redirectUrl.searchParams.set("redirectedFrom", pathname);
-          return NextResponse.redirect(redirectUrl);
-        }
-      }
+    // Redirect to login if accessing protected route without session
+    if (!session) {
+      const redirectUrl = new URL("/login", req.url);
+      redirectUrl.searchParams.set("redirectedFrom", req.nextUrl.pathname);
+      return NextResponse.redirect(redirectUrl);
     }
 
     return res;
   } catch (error) {
-    // If there's an error, redirect to login
-    const redirectUrl = new URL("/login", req.url);
-    redirectUrl.searchParams.set("redirectedFrom", req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+    console.error("Error in middleware:", error);
+    return res;
   }
 }
 
-// Update matcher to only run middleware on protected routes
 export const config = {
-  matcher: [
-    "/resources/new",
-    "/issues/new",
-    "/events/new",
-    "/announcements/new",
-    "/jobs/new",
-    "/study-groups/new",
-    "/scholarships/new",
-    "/profile",
-    "/settings",
-    "/login",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

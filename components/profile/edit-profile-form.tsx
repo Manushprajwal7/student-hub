@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
-import { z } from 'zod'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { z } from "zod";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -21,24 +21,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
-import { supabase } from '@/lib/supabase'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const profileFormSchema = z.object({
   full_name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
+    message: "Name must be at least 2 characters.",
   }),
-})
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be less than 30 characters")
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      "Username can only contain letters, numbers, underscores, and hyphens"
+    ),
+});
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 interface EditProfileFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-  defaultValues?: Partial<ProfileFormValues>
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  defaultValues?: Partial<ProfileFormValues>;
 }
 
 export function EditProfileForm({
@@ -47,48 +55,52 @@ export function EditProfileForm({
   onSuccess,
   defaultValues,
 }: EditProfileFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: defaultValues || {
-      full_name: '',
+      full_name: "",
+      username: "",
     },
-  })
+  });
 
   async function onSubmit(data: ProfileFormValues) {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
-      if (!user) throw new Error('No user found')
+      if (!user) throw new Error("No user found");
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: data.full_name,
-          updated_at: new Date().toISOString(),
-        })
+      const { error } = await supabase.from("profiles").upsert({
+        user_id: user.id,
+        full_name: data.full_name,
+        username: data.username,
+        updated_at: new Date().toISOString(),
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
-        title: 'Profile updated',
-        description: 'Your profile has been updated successfully.',
-      })
-      onSuccess()
-      onOpenChange(false)
+        title: "Success",
+        description: "Profile updated successfully.",
+      });
+      onSuccess();
+      onOpenChange(false);
     } catch (error) {
+      console.error("Error updating profile:", error);
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update profile. Please try again.',
-      })
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update profile. Please try again.",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -116,6 +128,19 @@ export function EditProfileForm({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your username" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
@@ -124,6 +149,5 @@ export function EditProfileForm({
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
